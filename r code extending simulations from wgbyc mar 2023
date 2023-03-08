@@ -108,6 +108,8 @@ p_haul_obs=1,detect_prob=1,refusal_rate=0, miscalssification=0) {
 #be taken to add to nbycatch_sp_j
 
 #refusal_rate: the probability that a vessel selected for monitoring refuses to engage
+#refusal is replaced to introduce selective pressures
+#option 1 random option 2 associated with nbycatch
 
 #integrate observer procedure effect
 #this is protocol influence process
