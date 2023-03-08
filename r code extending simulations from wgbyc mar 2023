@@ -97,6 +97,15 @@ return(fishing)
 
 monitor_BPUE<-function(pmonitor=0.5,nsample=1000,BPUE_real=0,fishing=NA, p_monitor_boat=.1,boat_samp=TRUE) {
 
+#integrate observer procedure effect
+#this is protocol influence process
+# two potential effects : haul level effect: unobserved bycatch when monitored (lack of observation)
+#as well as decrease in the number of animal reported on a bycatch event (incomplete observation, eg drop out, multiple location needed)
+#observation probability function post sampling
+
+#second step: variance associated with observed ID
+
+
 BPUE_est<-array(nsample)
 
 for (i in 1:nsample) {
@@ -342,10 +351,12 @@ labs(x="proportion of the fleet reporting effort",y="Days at Sea")
 
 #### introducing varying boat characteristics which influence bycatch probability
 ## treating at first as two 'high res' metier categories, so say metier level 6 for a fishing year inspected at level 4
+
 make_fishing_year_metier<-function(mean.bycatch.event=1,mean.bycatch.large.event=20,p.large.event=0.01,
 							nboat=100,mean.fishing.event.boat.day=2,p.bycatch=c(0.1,.01),p.metier=c(.2,.8),stochastic=TRUE) {
 
 #p.metier is the proportion of vessel in the, here, length of p.bycatch metiers 
+# p bycatch event alternative distribution particularly for low density species
 
 nmetier<-length(p.bycatch)
 
@@ -467,3 +478,8 @@ labs(x="proportion of the fleet reporting effort",y="number of hauls bias")
 # first PTB and GNS
 
 
+#######################3
+#### 8 Mar 2023
+#### task 1: observer process
+#### task 2: within year trends in variability in fishing effort (mean event per day) and bycatch probability
+#### task 3: introduce "metier" in monitoring function
