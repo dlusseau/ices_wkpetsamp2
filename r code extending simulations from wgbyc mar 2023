@@ -95,7 +95,17 @@ return(fishing)
 ###################################################################################
 #### functions
 
-monitor_BPUE<-function(pmonitor=0.5,nsample=1000,BPUE_real=0,fishing=NA, p_monitor_boat=.1,boat_samp=TRUE) {
+monitor_BPUE<-function(pmonitor=0.5,nsample=1000,BPUE_real=0,fishing=NA, p_monitor_boat=.1,boat_samp=TRUE,
+p_haul_obs=1,detect_prob=1,miscalssification=0) {
+
+#p_haul_obs the probability that an entire fishing events (hauls) was observed by the observer
+#detect_prob is the detection probability of each individual in the bycatch event
+#while at first, detect_prob is an independent draw on each individual in the haul, we can implement a decrease in detect_prob
+#with nbycatch increasing (on a log scale or similar)
+
+#misclassification is the mis-identification probability for the bycaught species
+#misclassification might come in later when we have multiple species which can be confused, and therefore individuals from nbycatch_sp_i can
+#be taken to add to nbycatch_sp_j
 
 #integrate observer procedure effect
 #this is protocol influence process
@@ -110,8 +120,10 @@ BPUE_est<-array(nsample)
 
 for (i in 1:nsample) {
 
-if (boat_samp==TRUE) {
+if (boat_samp==FALSE) {
 monitored<-sample(c(1:dim(fishing)[1]),floor(pmonitor*dim(fishing)[1]),replace=FALSE) # sample without replacement
+fishing_monitored<-fishing[monitored,]
+
 BPUE_est[i]<-(sum(fishing$nbycatch[monitored])/length(monitored))
 } else {
 boat_sampled<-sample(1:max(fishing$boat),n=floor(max(fishing$boat)*p_monitor_boat),replace=FALSE)
