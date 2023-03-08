@@ -482,4 +482,4 @@ labs(x="proportion of the fleet reporting effort",y="number of hauls bias")
 #### 8 Mar 2023
 #### task 1: observer process
 #### task 2: within year trends in variability in fishing effort (mean event per day) and bycatch probability
-#### task 3: introduce "metier" in monitoring function
+#### task 3: introduce "metier" in monitoring and effort function
