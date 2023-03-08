@@ -96,7 +96,7 @@ return(fishing)
 #### functions
 
 monitor_BPUE<-function(pmonitor=0.5,nsample=1000,BPUE_real=0,fishing=NA, p_monitor_boat=.1,boat_samp=TRUE,
-p_haul_obs=1,detect_prob=1,miscalssification=0) {
+p_haul_obs=1,detect_prob=1,refusal_rate=0, miscalssification=0) {
 
 #p_haul_obs the probability that an entire fishing events (hauls) was observed by the observer
 #detect_prob is the detection probability of each individual in the bycatch event
@@ -106,6 +106,8 @@ p_haul_obs=1,detect_prob=1,miscalssification=0) {
 #misclassification is the mis-identification probability for the bycaught species
 #misclassification might come in later when we have multiple species which can be confused, and therefore individuals from nbycatch_sp_i can
 #be taken to add to nbycatch_sp_j
+
+#refusal_rate: the probability that a vessel selected for monitoring refuses to engage
 
 #integrate observer procedure effect
 #this is protocol influence process
@@ -123,13 +125,30 @@ for (i in 1:nsample) {
 if (boat_samp==FALSE) {
 monitored<-sample(c(1:dim(fishing)[1]),floor(pmonitor*dim(fishing)[1]),replace=FALSE) # sample without replacement
 fishing_monitored<-fishing[monitored,]
+not_observed<-sample(c(1:dim(fishing_monitored)[1]),floor((1-p_haul_obs)*dim(fishing_monitored)[1]),replace=FALSE)
+fishing_monitored$bycatch[not_observed]<-0
+fishing_monitored$nbycatch[not_observed]<-0
+fishing_monitored$nbycatch<-sapply(fishing_monitored$nbycatch,function(x) rbinom(1,x,detect_prob))
 
-BPUE_est[i]<-(sum(fishing$nbycatch[monitored])/length(monitored))
+BPUE_est[i]<-(sum(fishing_monitored$nbycatch)/length(monitored))
+
 } else {
-boat_sampled<-sample(1:max(fishing$boat),n=floor(max(fishing$boat)*p_monitor_boat),replace=FALSE)
+boat_sampled<-sample(unique(fishing$boat),n=floor(length(unique(fishing$boat))*p_monitor_boat),replace=FALSE)
+## think about situations when boats are never going out in a year. at the moment, the observer programme allows to react and sample
+## only those vessels that have been fishing at least once per year.
+
+#refusal
+boat_sampled<-sample(boat_sampled,n=floor(length(boat_sampled)*(1-refusal_rate)),replace=FALSE)
+
 fleet_sampled<-fishing[fishing$boat%in%boat_sampled,]
 monitored<-sample(c(1:dim(fleet_sampled)[1]),floor(pmonitor*dim(fleet_sampled)[1]),replace=FALSE) # sample without replacement
-BPUE_est[i]<-(sum(fleet_sampled$nbycatch[monitored])/length(monitored))
+fishing_monitored<-fleet_sampled[monitored,]
+not_observed<-sample(c(1:dim(fishing_monitored)[1]),floor((1-p_haul_obs)*dim(fishing_monitored)[1]),replace=FALSE)
+fishing_monitored$bycatch[not_observed]<-0
+fishing_monitored$nbycatch[not_observed]<-0
+fishing_monitored$nbycatch<-sapply(fishing_monitored$nbycatch,function(x) rbinom(1,x,detect_prob))
+
+BPUE_est[i]<-(sum(fishing_monitored$nbycatch)/length(monitored))
 }
 
 }
