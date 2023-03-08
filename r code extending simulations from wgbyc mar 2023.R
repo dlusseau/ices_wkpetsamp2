@@ -15,7 +15,7 @@ fishing.day<-1:365
 nboat<-100
 nmetier<-1
 fleet<-1:nboat
-metier<-1:nmetier
+metier<-1:nmetier; nyears <- 20 #used to be 100
 
 #n.fishing.event<-100000
 
@@ -158,7 +158,7 @@ monitor_estimate$BPUE_est_CV[i]<-monitor$CV
 monitor_estimate$rel.bias<-(monitor_estimate$BPUE_real-monitor_estimate$BPUE_est)/monitor_estimate$BPUE_real
 monitor_estimate$year<-1
 
-for (y in 1:100) {
+for (y in 1:nyears) {
 fishing1<-make_fishing_year()
 BPUE_real<-sum(fishing1$nbycatch)/dim(fishing1)[1]
 
