@@ -315,5 +315,75 @@ return(effort)
 }
 
 
+######################################################
+#####################################################
+
+
+
+###############################################################
+#### simulation code section
+
+
+p.bycatch<-cbind(c(.1,.01,.001,.001,.001),c(.2,.02,.002,.01,.1))
+p.metier<-cbind(c(.5,.8,.2),c(.5,.8,.2))
+p_report<-cbind(c(1,.8,.2,.2),c(1,.2,.8,.2))
+
+pmonitor_boatTRUE<-c(1,.5,.1,.01)
+p_monitor_boat_boatTRUE<-c(1,.5,.1,.01)
+pmonitor_boatFALSE<-c(1,.5,.1,.05,.01,.001)
+p_monitor_metier<-c(1,1)
+
+
+estimate_fishing_effort_metier<-function(fishing=NA,p_report=.9,bymetier=FALSE)
+
+
+
+
+fishing1<-make_fishing_year()
+
+p_monitor<-c(seq(.01,.2,.01),seq(.25,.5,.05))
+
+BPUE_real<-sum(fishing1$nbycatch)/dim(fishing1)[1]
+
+#try 1 monitoring programme
+BPUE_estimate<-monitor_BPUE(pmonitor=p_monitor[1],BPUE_real=BPUE_real,fishing=fishing1)
+
+## first assessment what happens when I increase monitoring rate
+
+monitor_estimate<-data.frame(p_monitor=p_monitor,BPUE_real=BPUE_real,BPUE_est=NA,BPUE_est_CV=NA)
+
+for (i in 1:length(p_monitor)) {
+
+monitor<-monitor_BPUE(pmonitor=p_monitor[i],BPUE_real=BPUE_real,fishing=fishing1)
+monitor_estimate$BPUE_est[i]<-monitor$BPUE_est
+monitor_estimate$BPUE_est_CV[i]<-monitor$CV
+}
+
+## now we are going to replicate the real fishing year replication 100 times
+monitor_estimate$rel.bias<-(monitor_estimate$BPUE_real-monitor_estimate$BPUE_est)/monitor_estimate$BPUE_real
+monitor_estimate$year<-1
+
+for (y in 1:100) {
+fishing1<-make_fishing_year()
+BPUE_real<-sum(fishing1$nbycatch)/dim(fishing1)[1]
+
+
+temp<-data.frame(p_monitor=p_monitor,BPUE_real=BPUE_real,BPUE_est=NA,BPUE_est_CV=NA)
+
+for (i in 1:length(p_monitor)) {
+
+monitor<-monitor_BPUE(pmonitor=p_monitor[i],BPUE_real=BPUE_real,fishing=fishing1)
+temp$BPUE_est[i]<-monitor$BPUE_est
+temp$BPUE_est_CV[i]<-monitor$CV
+}
+
+temp$rel.bias<-(temp$BPUE_real-temp$BPUE_est)/temp$BPUE_real
+temp$year<-y
+
+
+monitor_estimate<-rbind(monitor_estimate,temp)
+
+}
+
 
 
