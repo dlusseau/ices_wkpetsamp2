@@ -386,4 +386,26 @@ monitor_estimate<-rbind(monitor_estimate,temp)
 }
 
 
+monitor_estimate<-data.frame(year=rep(1:100,each=length(p_monitor)*length(p_monitor_boat)),p_monitor=rep(rep(p_monitor,100),each=length(p_monitor_boat)),p_monitor_boat=rep(p_monitor_boat,length(p_monitor)*100),BPUE_real=NA,BPUE_est=NA,BPUE_est_CV=NA,rel.bias=NA)
+
+for (i in 1:dim(monitor_estimate)[1]) {
+
+fishing1<-make_fishing_year()
+monitor_estimate$BPUE_real[i]<-sum(fishing1$nbycatch)/dim(fishing1)[1]
+
+monitor<-monitor_BPUE(pmonitor=monitor_estimate$p_monitor[i],p_monitor_boat=monitor_estimate$p_monitor_boat[i],BPUE_real=monitor_estimate$BPUE_real[i],fishing=fishing1)
+monitor_estimate$BPUE_est[i]<-monitor$BPUE_est
+monitor_estimate$BPUE_est_CV[i]<-monitor$CV
+monitor_estimate$rel.bias[i]<-(monitor_estimate$BPUE_real[i]-monitor_estimate$BPUE_est[i])/monitor_estimate$BPUE_real[i]
+print(i/dim(monitor_estimate)[1])
+flush.console()
+
+}
+
+save(monitor_estimate,file="C:/Users/davlu/OneDrive - Danmarks Tekniske Universitet/WGBYC/monitoring_simulation_uneven_boat_sampling.Rdata")
+
+monitor_estimate$rel.bias.abs<-abs(monitor_estimate$rel.bias)
+monitor_estimate$fpmonitor<-factor(monitor_estimate$p_monitor)
+monitor_estimate$fpboat<-factor(monitor_estimate$p_monitor_boat)
+
 
