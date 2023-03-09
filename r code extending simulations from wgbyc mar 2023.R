@@ -258,21 +258,43 @@ fishing$nbycatch[fishing$bycatch==1]<-apply(cbind((1-event.type)*rtpois(sum(fish
 
 
 for (i in 2:365) {
-
-if (stochastic==TRUE) {
-#mean.fishing.event.boat.day<-rtpois(nboat,mean.fishing.event.boat.day,a=0)# we don't need to resample  #introduce stochasticity so that the mean number of events per boats vary
-fishing.event.per.boat<-rpois(nboat,mean.fishing.event.boat.day)
-} else {
-fishing.event.per.boat<-rpois(nboat,mean.fishing.event.boat.day) #uniform fishing behaviour
-}
-
-temp<-data.frame(fishing.day=fishing.day[i],boat=rep(fleet,fishing.event.per.boat),bycatch=rbinom(sum(fishing.event.per.boat),1,p.bycatch),nbycatch=0)
-event.type<-rbinom(sum(temp$bycatch),1,p.large.event)
-temp$nbycatch[temp$bycatch==1]<-apply(cbind((1-event.type)*rtpois(sum(temp$bycatch),mean.bycatch.event,a=0),event.type*rtpois(sum(temp$bycatch),mean.bycatch.large.event,a=0)),1,max)
-
-fishing<-rbind(fishing,temp)
-
-}
+    
+    if (stochastic==TRUE) {
+      #mean.fishing.event.boat.day<-rtpois(nboat,mean.fishing.event.boat.day,a=0) #that's stays the same for the whole year #introduce stochasticity so that the mean number of events per boats vary
+      fishing.event.per.boat<-rpois(nboat,mean.fishing.event.boat.day)
+    } else {
+      fishing.event.per.boat<-rpois(nboat,mean.fishing.event.boat.day) #uniform fishing behaviour
+    }
+  
+    if (spatio.temporal.fishery.trend==TRUE){
+      #enable change in fishery density in specific areas and time periods
+      fishing.area.dist = if(i %in% time.periods.fishery){sample(1:narea,nboat,replace=TRUE,prob=dbbinom(1:narea-1, narea-1, spatial.effort.skewness.special[1], spatial.effort.skewness.special[2]))
+      } else{
+      sample(1:narea,nboat,replace=TRUE,prob=dbbinom(1:narea-1, narea-1, spatial.effort.skewness.general[1], spatial.effort.skewness.general[2]))
+      }
+      area=rep(fishing.area.dist,fishing.event.per.boat)
+      }else{
+        fishing.area.dist<-sample(1:narea,nboat,replace=TRUE,prob=dbbinom(1:narea-1, narea-1, spatial.effort.skewness.general[1], spatial.effort.skewness.general[2])) 
+      area=rep(fishing.area.dist,fishing.event.per.boat)
+    }     
+     
+    
+    temp<-data.frame(fishing.day=fishing.day[i],boat=rep(fleet,fishing.event.per.boat),area=area,metiers=rep(metier,fishing.event.per.boat),bycatch=rbinom(sum(fishing.event.per.boat),1,p.bycatch[rep(metier,fishing.event.per.boat)]),nbycatch=0)
+      #enable change in fishery density in specific areas and time periods
+    tryCatch({  
+    bycatch_high = temp[temp$fishing.day %in% time.periods.bycatch & temp$area %in%  hostspot.area,]
+      bycatch_high$bycatch<-bycatch=rbinom(sum(fishing.event.per.boat),1,p.bycatch[rep(metier,fishing.event.per.boat)]*2)
+      bycatch_low = temp[!temp$fishing.day %in% time.periods.bycatch & !temp$area %in%  hostspot.area,]
+      bycatch_low$bycatch<-bycatch=rbinom(sum(fishing.event.per.boat),1,p.bycatch[rep(metier,fishing.event.per.boat)])
+      fisherydata<-rbind(bycatch_high,bycatch_low)},
+  error=function(e){})
+    
+    event.type<-rbinom(sum(temp$bycatch),1,p.large.event)
+    temp$nbycatch[temp$bycatch==1]<-apply(cbind((1-event.type)*rtpois(sum(temp$bycatch),mean.bycatch.event,a=0),event.type*rtpois(sum(temp$bycatch),mean.bycatch.large.event,a=0)),1,max)
+    
+    fishing<-rbind(fishing,temp)
+    
+  }
 #########
 ## so for this challenge we need to change the computation of the estimated total bycatch it becomes the estimated BPUE x estimated effort
 return(fishing)
