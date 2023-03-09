@@ -266,3 +266,54 @@ BPUE_est_CV<-sd(BPUE_est)/mean(BPUE_est)
 return(list(BPUE_est=BPUE_est_mean,CV=BPUE_est_CV))
 }
 
+
+
+estimate_fishing_effort_metier<-function(fishing=NA,p_report=.9,bymetier=FALSE) {
+effort<-data.frame(DaS_report=NA,hauls_report=NA,DaS_estimated=NA,hauls_estimated=NA,DaS_real=NA,hauls_real=NA)
+
+#we calculate real effort, reported effort, and estimated effort where we know the fleet size and assume average effort for those unreported
+# here reporting bias is at the vessel/boat level at first random then biased by high res metier (eg small vessels not reporting)
+if (bymetier==FALSE) {
+reporting<-sample(1:nboat,floor(p_report*nboat),replace=FALSE)
+fishing.report<-fishing[fishing$boat%in%reporting,]
+effort$hauls_real<-dim(fishing)[1]
+effort$hauls_report<-dim(fishing.report)[1]
+effort$hauls_estimated<-dim(fishing.report)[1]+(nboat-floor(p_report*nboat))*mean(table(fishing.report$boat)) #add 1-p_report nboat fishing mean number of hauls of those reporting
+Das<-rowSums(table(fishing$boat,fishing$fishing.day)!=0)
+Das_report<-rowSums(table(fishing.report$boat,fishing.report$fishing.day)!=0)
+
+effort$DaS_real<-sum(Das)
+effort$DaS_report<-sum(Das_report)
+effort$DaS_estimated=sum(Das_report)+(nboat-floor(p_report*nboat))*mean(Das)
+
+} else {
+#p_report is a vector
+nmetier<-length(unique(fishing$metiers))
+
+reporting<-sample(unique(fishing$boat[fishing$metiers==1]),floor(p_report[1]*length(unique(fishing$boat[fishing$metiers==1]))),replace=FALSE) # sample without replacement
+for (i in 2:nmetier) {
+reporting<-c(boat_sampled,sample(unique(fishing$boat[fishing$metiers==i]),floor(p_report[i]*length(unique(fishing$boat[fishing$metiers==i]))),replace=FALSE)) # sample without replacement
+
+}
+
+#reporting<-sample(1:nboat,floor(p_report*nboat),replace=FALSE)
+
+fishing.report<-fishing[fishing$boat%in%reporting,]
+effort$hauls_real<-dim(fishing)[1]
+effort$hauls_report<-dim(fishing.report)[1]
+effort$hauls_estimated<-dim(fishing.report)[1]+(nboat-floor(p_report*nboat))*mean(table(fishing.report$boat)) #add 1-p_report nboat fishing mean number of hauls of those reporting
+Das<-rowSums(table(fishing$boat,fishing$fishing.day)!=0)
+Das_report<-rowSums(table(fishing.report$boat,fishing.report$fishing.day)!=0)
+
+effort$DaS_real<-sum(Das)
+effort$DaS_report<-sum(Das_report)
+effort$DaS_estimated<-sum(Das_report)+(nboat-floor(p_report*nboat))*mean(Das)
+
+}
+
+return(effort)
+}
+
+
+
+
