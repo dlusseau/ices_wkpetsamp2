@@ -396,8 +396,20 @@ return(fishing)
 
 ## treating at first as two 'high res' metier categories, so say metier level 6 for a fishing year inspected at level 4
 
+#parameters controlling fishery effort allocation and bycatch hot spot areas, relative to time
+narea<-10 #defines how many areas you want
+spatial.effort.skewness.general<-c(1,1) #alpha and beta parameters from the in beta-binomial distribution, X∼BB(n,α,β). If α=β=1, then it is a discrete uniform distribution, if α≥1 and β<1 then it is a discrete left-skewed distribution.
+spatial.effort.skewness.special<-c(1.7,0.3)# for time periods with different distribution
+time.periods.fishery<-32:60 #time of year you want the within area effort to shift, could be several periods (uses spatial.effort.skewness.special )
+time.periods.bycatch<-32:60#if similar as time.periods.fishery
+hostspot.area<-10 #define area(s) that you would like to be hotspots for bycatch
+##
 make_fishing_year_metier<-function(mean.bycatch.event=1,mean.bycatch.large.event=20,p.large.event=0.01,
-                                   nboat=100,mean.fishing.event.boat.day=2,p.bycatch=c(0.1,.01),p.metier=c(.2,.8),narea=10,stochastic=TRUE, spatio.temporal.fishery.trend=TRUE ) {
+                                   nboat=100,mean.fishing.event.boat.day=2,p.bycatch=c(0.1,.01),p.metier=c(.2,.8),
+                                   narea=10,stochastic=TRUE, spatio.temporal.fishery.trend=TRUE,spatio.temporal.bycatch.trend=TRUE,
+                                   spatial.effort.skewness.general=c(1,1), spatial.effort.skewness.special=c(1.7,0.3),
+                                   time.periods.fishery=32:60,time.periods.bycatch=32:60,hostspot.area=10
+                                   ) {
   
   #p.metier is the proportion of vessel in the, here, length of p.bycatch metiers 
   # p bycatch event alternative distribution particularly for low density species
@@ -407,12 +419,6 @@ make_fishing_year_metier<-function(mean.bycatch.event=1,mean.bycatch.large.event
   fishing.day<-1:365
   fleet<-1:nboat
   metier<-sample(1:nmetier,nboat,replace=TRUE,prob=p.metier) #here we deal with probability of metier, not proportion of metier
-  narea<-10 #defines how many areas you want
-  spatial.effort.skewness.general<-c(1,1) #alpha and beta parameters from the in beta-binomial distribution, X∼BB(n,α,β). If α=β=1, then it is a discrete uniform distribution, if α≥1 and β<1 then it is a discrete left-skewed distribution.
-  spatial.effort.skewness.special<-c(1.7,0.3)# for time periods with different distribution
-  time.periods.fishery<-32:60 #time of year you want the within area effort to shift, could be several periods (uses spatial.effort.skewness.special )
-  time.periods.bycatch<-32:60#if similar astime.periods.fishery
-  hostspot.area<-10
   
   if (stochastic==TRUE) {
     # here number of hauls is still not associated to "high res" metier
